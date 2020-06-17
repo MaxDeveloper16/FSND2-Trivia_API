@@ -12,7 +12,7 @@ class QuizView extends Component {
         quizCategory: null,
         previousQuestions: [], 
         showAnswer: false,
-        categories: {},
+        categories: [],
         numCorrect: 0,
         currentQuestion: {},
         guess: '',
@@ -22,10 +22,10 @@ class QuizView extends Component {
 
   componentDidMount(){
     $.ajax({
-      url: `/categories`, //TODO: update request URL
+      url: `/api/categories`,
       type: "GET",
       success: (result) => {
-        this.setState({ categories: result.categories })
+        this.setState({ categories: result })
         return;
       },
       error: (error) => {
