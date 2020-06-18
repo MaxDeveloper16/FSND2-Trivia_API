@@ -126,15 +126,15 @@ def create_app(test_config=None):
   #Delete a question
   @app.route('/api/questions/<int:question_id>',methods=['DELETE'])
   def delete_question(question_id):
-    try:
-        # delete question
-        question = Question.query.filter(
+
+    question = Question.query.filter(
             Question.id == question_id
         ).one_or_none()
 
-        if question is None:
-            abort(404)
-
+    if question is None:
+        abort(404)
+    try:
+        # delete question       
         question.delete()
 
         # return response
@@ -181,57 +181,47 @@ def create_app(test_config=None):
     Create error handlers for all expected errors
     including 404 and 422.
     '''
-    @app.errorhandler(404)
-    def not_found(error):
-        return jsonify({
-            "success": False,
-            "error": 404,
-            "message": "Resource not found"
-        }), 404
+  @app.errorhandler(404)
+  def not_found(error):
+      return jsonify({
+          "success": False,
+          "error": 404,
+          "message": "Resource not found"
+      }), 404
 
-    @app.errorhandler(422)
-    def unprocessable(error):
-        return jsonify({
-            "success": False,
-            "error": 422,
-            "message": "Unprocessable"
-        }), 422
+  @app.errorhandler(422)
+  def unprocessable(error):
+      return jsonify({
+          "success": False,
+          "error": 422,
+          "message": "Unprocessable"
+      }), 422
 
-    @app.errorhandler(400)
-    def bad_request(error):
-        return jsonify({
-            "success": False,
-            "error": 400,
-            "message": "Bad Request"
-        }), 400
+  @app.errorhandler(400)
+  def bad_request(error):
+      return jsonify({
+          "success": False,
+          "error": 400,
+          "message": "Bad Request"
+      }), 400
 
-    @app.errorhandler(405)
-    def method_not_allowed(error):
-        return jsonify({
-            "success": False,
-            "error": 405,
-            "message": "Method not allowed"
-        }), 405
+  @app.errorhandler(405)
+  def method_not_allowed(error):
+      return jsonify({
+          "success": False,
+          "error": 405,
+          "message": "Method not allowed"
+      }), 405
 
-    @app.errorhandler(500)
-    def server_error(error):
-        return jsonify({
-            "success": False,
-            "error": 500,
-            "message": "Internal Server Error"
-        }), 500
+  @app.errorhandler(500)
+  def server_error(error):
+      return jsonify({
+          "success": False,
+          "error": 500,
+          "message": "Internal Server Error"
+      }), 500
     
-    # @app.errorhandler(Exception)
-    # def handle_error(e):
-    #     code = 500
-    #     if isinstance(e, HTTPException):
-    #         code = e.code
-    #     return jsonify(
-    #       {"success": False,
-    #         "error": 500,
-    #         "message": str(e)
-    #       }), code
-      
+          
 
 
   return app
