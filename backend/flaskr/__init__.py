@@ -2,10 +2,13 @@ import os
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-import random
+# import random
 import logging
 
 from models import setup_db, Question, Category
+from sqlalchemy import func
+from werkzeug.exceptions import HTTPException
+
 
 QUESTIONS_PER_PAGE = 10
 
@@ -104,7 +107,7 @@ def create_app(test_config=None):
     category = data.get("category", None)
 
     if not all([question, answer, category, difficulty]):
-        return abort(400)
+      abort(400)
 
     try:
         question = Question(
@@ -118,7 +121,7 @@ def create_app(test_config=None):
         return filter_questions(category)
     except Exception as e:
         logging.exception(e)
-        return abort(500)
+        abort(500)
 
   #Delete a question
   @app.route('/api/questions/<int:question_id>',methods=['DELETE'])
@@ -141,7 +144,94 @@ def create_app(test_config=None):
         })
     except Exception as e:
         logging.exception(e)
-        return abort(500)
+        abort(500)
+
+  #Get random question for the quiz
+  @app.route('/api/quizzes', methods=['POST'])
+  def quizzes_game():
+    try:
+      data = request.get_json()
+      if data is None:
+          previous_questions = []
+          quiz_category = {}
+      else:
+          previous_questions = data.get('previous_questions', [])
+          quiz_category = data.get('quiz_category', {})
+
+      query = Question.query
+
+      if 'id' in quiz_category:
+          query = query.filter(Question.category == quiz_category['id'])
+
+      question = query.filter(
+          Question.id.notin_(previous_questions)
+      ).order_by(func.random()).first()
+
+      return jsonify({
+                'success': True,
+                'question': question.format() if question else False,
+                'previous_questions': previous_questions,
+            })
+      
+    except Exception as e:
+      logging.exception(e)
+      abort(500)
+
+    '''
+    Create error handlers for all expected errors
+    including 404 and 422.
+    '''
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({
+            "success": False,
+            "error": 404,
+            "message": "Resource not found"
+        }), 404
+
+    @app.errorhandler(422)
+    def unprocessable(error):
+        return jsonify({
+            "success": False,
+            "error": 422,
+            "message": "Unprocessable"
+        }), 422
+
+    @app.errorhandler(400)
+    def bad_request(error):
+        return jsonify({
+            "success": False,
+            "error": 400,
+            "message": "Bad Request"
+        }), 400
+
+    @app.errorhandler(405)
+    def method_not_allowed(error):
+        return jsonify({
+            "success": False,
+            "error": 405,
+            "message": "Method not allowed"
+        }), 405
+
+    @app.errorhandler(500)
+    def server_error(error):
+        return jsonify({
+            "success": False,
+            "error": 500,
+            "message": "Internal Server Error"
+        }), 500
+    
+    # @app.errorhandler(Exception)
+    # def handle_error(e):
+    #     code = 500
+    #     if isinstance(e, HTTPException):
+    #         code = e.code
+    #     return jsonify(
+    #       {"success": False,
+    #         "error": 500,
+    #         "message": str(e)
+    #       }), code
+      
 
 
   return app

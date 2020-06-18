@@ -35,8 +35,12 @@ class QuizView extends Component {
     })
   }
 
-  selectCategory = ({type, id=0}) => {
-    this.setState({quizCategory: {type, id}}, this.getNextQuestion)
+  selectCategory = id => {
+    this.setState({quizCategory: this.state.categories.find(c => c.id === id)}, this.getNextQuestion)
+  }
+
+  selectAnyCategory = () => {
+  	this.setState({quizCategory: {}}, this.getNextQuestion)
   }
 
   handleChange = (event) => {
@@ -48,7 +52,7 @@ class QuizView extends Component {
     if(this.state.currentQuestion.id) { previousQuestions.push(this.state.currentQuestion.id) }
 
     $.ajax({
-      url: '/quizzes', //TODO: update request URL
+      url: '/api/quizzes', 
       type: "POST",
       dataType: 'json',
       contentType: 'application/json',
@@ -104,18 +108,18 @@ class QuizView extends Component {
           <div className="quiz-play-holder">
               <div className="choose-header">Choose Category</div>
               <div className="category-holder">
-                  <div className="play-category" onClick={this.selectCategory}>ALL</div>
-                  {Object.keys(this.state.categories).map(id => {
+                  <div className="play-category" onClick={this.selectAnyCategory}>ALL</div>
+                  {this.state.categories.map(({id, type}) => {
                   return (
                     <div
                       key={id}
                       value={id}
                       className="play-category"
-                      onClick={() => this.selectCategory({type:this.state.categories[id], id})}>
-                      {this.state.categories[id]}
+                      onClick={() => this.selectCategory(id)}>
+                      {type}
                     </div>
                   )
-                })}
+                  })}
               </div>
           </div>
       )
@@ -133,7 +137,8 @@ class QuizView extends Component {
   evaluateAnswer = () => {
     const formatGuess = this.state.guess.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").toLowerCase()
     const answerArray = this.state.currentQuestion.answer.toLowerCase().split(' ');
-    return answerArray.includes(formatGuess)
+	const regex = new RegExp(answerArray.join("|"), "i")
+    return regex.test(formatGuess)
   }
 
   renderCorrectAnswer(){
