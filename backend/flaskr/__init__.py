@@ -110,15 +110,15 @@ def create_app(test_config=None):
       abort(400)
 
     try:
-        question = Question(
+        new_question = Question(
           question=question,
           answer=answer,
           category=category,
           difficulty=difficulty
         )
-        question.insert()
+        new_question.insert()
 
-        return filter_questions(category)
+        return jsonify(new_question.format()), 201
     except Exception as e:
         logging.exception(e)
         abort(500)

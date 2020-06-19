@@ -49,6 +49,7 @@ class FormView extends Component {
       },
       crossDomain: true,
       success: (result) => {
+        alert('Add question successful!')
         document.getElementById("add-question-form").reset();
         return;
       },

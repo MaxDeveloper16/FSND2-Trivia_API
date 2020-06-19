@@ -2,6 +2,7 @@ import os
 import unittest
 import json
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import asc, desc
 
 from flaskr import create_app
 from models import setup_db, Question, Category
@@ -42,14 +43,117 @@ class TriviaTestCase(unittest.TestCase):
         """Executed after reach test"""
         pass
 
+    #Test get_categories
     def test_get_categories(self):
         
+        #request
         res = self.client().get('/api/categories')
         data = json.loads(res.data)
-        self.assertEqual(data.status_code,200)
+
+        #assert
+        self.assertEqual(res.status_code,200)
         self.assertTrue(data[0]["id"])
         self.assertTrue(data[0]["type"])
         self.assertEqual(len(data), Category.query.count())
+
+    #Test get_questions
+    def test_get_questions(self):
+       
+        #request
+        total_questions = Question.query.count()
+
+        res = self.client().get('/api/questions')
+        data = json.loads(res.data)
+
+        #assert
+        self.assertEqual(res.status_code,200)
+        self.assertTrue(data['questions'])
+        self.assertEqual(total_questions,data['total_questions'])
+        self.assertEqual(0,data['current_category'])
+
+    #Test get_questions_by_category
+    def test_get_questions_by_category(self):
+              
+        category_id = Category.query.first().id
+        total_questions = Question.query.filter_by(
+                category=str(category_id)).count()
+        
+        #request
+        res = self.client().get('/api/categories/'+str(category_id)+'/questions')
+        data = json.loads(res.data)
+
+        #assert
+        self.assertEqual(res.status_code,200)
+        self.assertTrue(data['questions'])
+        self.assertEqual(total_questions,data['total_questions'])
+        self.assertEqual(category_id,data['current_category'])
+
+    #Test get_questions with searchTerm 
+    def test_get_questions_by_searchTerm(self):
+        
+        question = Question.query.first()
+        search_term = question.question
+
+        #request
+        res = self.client().get('/api/questions?search_term='+search_term)
+        data = json.loads(res.data)
+
+        #assert
+        self.assertEqual(res.status_code,200)
+        self.assertTrue(data['questions'])
+        self.assertTrue(data['total_questions'])
+        self.assertEqual(0,data['current_category'])
+
+    #Test add_question
+    def test_add_question(self):
+        
+        #request
+        res = self.client().post('/api/questions',json=self.new_question)
+        question = Question.query.filter_by(question=self.new_question['question'])
+        #assert
+        self.assertEqual(res.status_code,200)
+        self.assertTrue(question)
+
+    #Test delete_question
+    def test_delete_question(self):
+        question = Question.query.order_by(desc(Question.id)).first()
+        
+        #request
+        res = self.client().delete('/api/questions/'+str(question.id))
+        self.assertEqual(res.status_code, 200)
+
+        #assert
+        deleted = Question.query.filter_by(id=question.id).first()
+        self.assertIsNone(deleted)
+
+    #Test quizzes_game
+    def test_quizzes_game(self):
+        
+        #request
+        res = self.client().post('/api/quizzes')
+        data = json.loads(res.data)
+        
+        #assert
+        self.assertEqual(res.status_code,200)
+        self.assertTrue(data['question'])
+        self.assertTrue(data['success'])
+
+    #Test 404
+    def test_405_errorhandler(self):
+        
+        #request
+        res = self.client().post('/api/categories')
+        data = json.loads(res.data)
+
+        #assert
+        self.assertEqual(res.status_code,405)
+        self.assertEqual(data['error'],405)
+        self.assertEqual(data['message'],'Method not allowed')
+
+
+        
+
+
 
     
 
