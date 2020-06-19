@@ -111,7 +111,7 @@ class TriviaTestCase(unittest.TestCase):
         res = self.client().post('/api/questions',json=self.new_question)
         question = Question.query.filter_by(question=self.new_question['question'])
         #assert
-        self.assertEqual(res.status_code,200)
+        self.assertEqual(res.status_code,201)
         self.assertTrue(question)
 
     #Test delete_question
